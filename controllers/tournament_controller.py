@@ -1,5 +1,5 @@
 from models import Tournament, Player
-from utils import load_players_to_json, save_tournament, is_valid_start_date_tournament, is_valid_end_date_tournament, rm_accent_punct_space
+from utils import load_players_to_json, save_new_tournament, is_valid_start_date_tournament, is_valid_end_date_tournament, rm_accent_punct_space
 import os
 from datetime import datetime
 
@@ -31,8 +31,8 @@ def create_tournament():
     description = input("Entrez une description du tournoi ")
 
     # charger les joueurs pour la création d'un tournoi
-    path = os.path.join('data', 'players', 'players.txt')
-    players_json = load_players_to_json(path)
+    path_players = os.path.join('data', 'players', 'players.txt')
+    players_json = load_players_to_json(path_players)
     tournament = Tournament(name, location, start_date, end_date, num_rounds, description)
 
     for i in range(len(players_json['last_name'])):
@@ -44,8 +44,8 @@ def create_tournament():
         tournament.add_player(player)
 
     # Save tournament to json in ./data/tournaments
-    tournament_file_name = str(int(datetime.strptime(tournament.start_date, '%d/%m/%Y').timestamp()))+"-"+rm_accent_punct_space(tournament.name)+".txt"
-    path = os.path.join('data', 'tournaments', tournament_file_name)
+    tournament_file_name = str(int(datetime.strptime(tournament.start_date, '%d/%m/%Y').timestamp()))+"-"+str(int(datetime.strptime(tournament.end_date, '%d/%m/%Y').timestamp()))+"-"+rm_accent_punct_space(tournament.name)+".txt"
+    path_tournament = os.path.join('data', 'tournaments', tournament_file_name)
     data_tournament = tournament.export_data_tournament()
     players_to_json = []
     for player in data_tournament['players']:
@@ -57,4 +57,4 @@ def create_tournament():
             data_tournament_to_json[key] = players_to_json
         else:
             data_tournament_to_json[key] = data_tournament[key]
-    save_tournament(path, data_tournament_to_json)
+    save_new_tournament(path_tournament, data_tournament_to_json, path_players, str(int(datetime.strptime(tournament.start_date, '%d/%m/%Y').timestamp())), str(int(datetime.strptime(tournament.end_date, '%d/%m/%Y').timestamp())))
