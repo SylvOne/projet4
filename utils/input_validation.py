@@ -16,11 +16,12 @@ def is_valid_date(date_string):
 
 def is_valid_start_date_tournament(start_date):
     try:
-        start_date_obj = datetime.strptime(start_date, '%d/%m/%Y')
-        if start_date_obj < datetime.now():
-            print("La date de début doit être une date future.")
-        else:
+        start_date_obj = datetime.strptime(start_date, '%d/%m/%Y').date()
+        if start_date_obj >= datetime.now().date():
             return True
+        else:
+            print("La date de début doit être une date future ou actuelle.")
+            return False
     except ValueError:
         print("La date de début n'est pas au format JJ/MM/AAAA.")
 

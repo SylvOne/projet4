@@ -1,5 +1,4 @@
 import json
-import random
 from models import Tournament, Player, Round
 from utils import load_players_to_json, save_new_tournament, is_valid_start_date_tournament, is_valid_end_date_tournament, rm_accent_punct_space, file_manager
 import os
@@ -155,9 +154,9 @@ def start_round_tournament():
             count_match = 0
             stop_or_no = ""
             for match in current_round.matches:
-                print(f" Entrez le résultat du match {match[0][0].first_name} vs joueur 2 : {match[1][0].first_name} :")
-                print(f"joueur 1 : {match[0][0].first_name} {match[0][0].score}")
-                print(f"joueur 2 : {match[1][0].first_name} {match[0][0].score}")
+                print(f" Entrez le résultat du match {match[0][0].first_name} vs {match[1][0].first_name} :")
+                print(f"joueur 1 : {match[0][0].first_name} score actuel => {match[0][0].score}")
+                print(f"joueur 2 : {match[1][0].first_name} score actuel => {match[1][0].score}")
                 print("==> Tapez 1. Le joueur 1 gagne.")
                 print("==> Tapez 2. Le joueur 2 gagne.")
                 print("==> Tapez 0. Pour match nul.")
