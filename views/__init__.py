@@ -1,2 +1,2 @@
-from .tournament_views import display_tournaments
+from .tournament_views import display_tournaments, display_tournaments_in_progress
 from .player_views import display_players

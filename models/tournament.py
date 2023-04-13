@@ -1,6 +1,7 @@
 from models.round import Round
 import random
 import datetime
+from models.match import Match
 
 class Tournament:
     def __init__(self, name, location, start_date, end_date, num_rounds=4, description=""):
@@ -31,7 +32,7 @@ class Tournament:
 
                 for i, player in enumerate(sorted_players):
                     if player.national_id == player1_id and i + 1 < len(sorted_players) and sorted_players[i + 1].national_id == player2_id:
-                        match = ([player, 0], [sorted_players[i + 1], 0])
+                        match = Match(player, sorted_players[i + 1])
                         pairs.append(match)
                         break
             # On vide la propriété pairs_to_do
@@ -58,7 +59,7 @@ class Tournament:
                         break
                     player2 = sorted_players[i + 1]
 
-                match = ([player1, 0], [player2, 0])
+                match = Match(player1, player2)
                 pairs.append(match)
                 player1.opponents.append(player2)
                 player2.opponents.append(player1)
@@ -91,10 +92,10 @@ class Tournament:
                 "name": round_.name,
                 "matches": [
                     {
-                        "player1": match[0][0].national_id,
-                        "player1_score": match[0][1],
-                        "player2": match[1][0].national_id,
-                        "player2_score": match[1][1],
+                        "player1": match.match[0][0].national_id,
+                        "player1_score": match.match[0][1],
+                        "player2": match.match[1][0].national_id,
+                        "player2_score": match.match[1][1],
                     }
                     for match in round_.matches
                 ],
@@ -107,8 +108,8 @@ class Tournament:
             "description": self.description,
             "matches": [
                 {
-                    "player1": match[0][0].national_id,
-                    "player2": match[1][0].national_id,
+                    "player1": match.match[0][0].national_id,
+                    "player2": match.match[1][0].national_id,
                 }
                 for match in self.pairs_to_do
             ],

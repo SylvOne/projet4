@@ -1,10 +1,7 @@
 import json
 import os
-import time
-
 import pytz as pytz
-
-from models import Player
+from models import Player, Tournament, Match
 from models import Round
 from datetime import datetime
 
@@ -58,34 +55,14 @@ def load_players_to_json(file_path, id_players=None):
         for player, player_data in zip(players, players_data):
             player.opponents = [id_to_player[opponent_id] for opponent_id in player_data["opponents"]]
 
-
     return players
 
-
-
-def load_round_json(round_json, players_by_id):
-    name = round_json["name"]
-    start_datetime = datetime.fromisoformat(round_json["start_time"])
-    end_datetime = datetime.fromisoformat(round_json["end_time"]) if round_json["end_time"] else None
-
-    matches = []
-    for match_json in round_json["matches"]:
-        player1 = players_by_id[match_json["player1_id"]]
-        player1_score = match_json["player1_score"]
-        player2 = players_by_id[match_json["player2_id"]]
-        player2_score = match_json["player2_score"]
-        matches.append(([player1, player1_score], [player2, player2_score]))
-
-    round_ = Round(name, matches)
-    round_.start_datetime = start_datetime
-    round_.end_datetime = end_datetime
-
-    return round_
 
 def save_player(file_path, players):
     players_data = [player.export_data_player() for player in players]
     with open(file_path, "w", encoding="utf-8") as outfile:
         json.dump(players_data, outfile, ensure_ascii=False)
+
 
 def save_new_tournament(file_path, data, file_path_players):
     """
@@ -114,6 +91,7 @@ def save_new_tournament(file_path, data, file_path_players):
         # Et maintenant on renomme le fichier players.txt
         os.rename(file_path_players, new_path)
     main_menu()
+
 
 def save_existing_tournament(file_path, data, finish_tournament = False):
     """
@@ -148,6 +126,83 @@ def save_existing_tournament(file_path, data, finish_tournament = False):
         print("Le tournoi n'existe pas")
     #main_menu()
 
+
+def load_tournaments_in_progress(path_directory):
+    paths_tournaments = get_files_with_start_date_in_progress(path_directory)
+    tournaments = []
+    for path_tournament in paths_tournaments:
+        tournament = load_tournament_from_file(path_tournament)
+        tournaments.append(tournament)
+    return tournaments
+
+
+def load_tournament_from_file(path_tournament):
+    with open(path_tournament, "r", encoding='utf-8') as f:
+        json_tournament = json.load(f)
+
+    tournament = Tournament(
+        json_tournament["name"],
+        json_tournament["location"],
+        json_tournament["start_date"],
+        json_tournament["end_date"],
+        json_tournament["num_rounds"],
+        json_tournament["description"]
+    )
+    tournament.current_round = json_tournament["current_round"]
+    tournament.pairs_to_do = json_tournament["matches"]
+
+    players = load_players(json_tournament)
+    tournament.players = players
+
+    id_to_player = {player.national_id: player for player in players}
+    rounds = load_rounds(json_tournament, id_to_player)
+    tournament.rounds = rounds
+
+    return tournament
+
+
+def load_players(json_tournament):
+    players = []
+    for player_data in json_tournament["players"]:
+        players.extend(load_players_to_json(player_data, json_tournament["players"]))
+    return players
+
+
+def load_rounds(json_tournament, id_to_player):
+    rounds = []
+    for round_data in json_tournament["rounds"]:
+        round_ = Round(
+            name=round_data["name"],
+            matches=[]
+        )
+        round_.start_datetime = datetime.fromisoformat(round_data["start_time"])
+        if round_data["end_time"]:
+            round_.end_datetime = datetime.fromisoformat(round_data["end_time"])
+        matches = []
+        for match_data in round_data["matches"]:
+            match = Match(id_to_player[match_data["player1"]], id_to_player[match_data["player2"]])
+            match.match[0][1] = match_data["player1_score"]
+            match.match[1][1] = match_data["player2_score"]
+            matches.append(match)
+
+        round_.matches = matches
+        rounds.append(round_)
+
+    return rounds
+
+
+def get_selected_tournament(tournaments):
+    while True:
+        choice_tournament = input(" ==> Sélectionnez le numéro du tournoi que vous voulez lancer ('q' pour quitter)")
+        if choice_tournament == 'q':
+            return None
+        while not int(choice_tournament) <= len(tournaments):
+            choice_tournament = input(" ==> La valeur entrée n'est pas correcte, veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
+
+        selected_tournament = tournaments[int(choice_tournament) - 1]
+        return selected_tournament
+
+
 def get_files_with_start_date_in_future(directory):
     # Récupération de la date actuelle en timestamp
     timezone = pytz.timezone('Europe/Paris')
@@ -176,13 +231,14 @@ def get_files_with_start_date_in_progress(directory):
     progress_files = []
     # Parcours des fichiers dans le répertoire donné
     for filename in os.listdir(directory):
-        # Récupération de la date de début du tournoi à partir du nom du fichier
-        start_date = int(filename.split("-")[0])
-        # Convertir le timestamp en objet datetime avec le fuseau horaire UTC
-        utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
-        # Convertir le fuseau horaire UTC en fuseau horaire France
-        convert_start_date = utc_dt.astimezone(timezone).date()
-        # Si la date de début est en cours par rapport à la date actuelle et que le tournoi n'est pas fini alors, on ajoute le fichier à la liste
-        if convert_start_date == today and not "finished" in filename or convert_start_date < today and not "finished" in filename:
-            progress_files.append(os.path.join(directory, filename))
+        if filename != ".DS_Store":
+            # Récupération de la date de début du tournoi à partir du nom du fichier
+            start_date = int(filename.split("-")[0])
+            # Convertir le timestamp en objet datetime avec le fuseau horaire UTC
+            utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
+            # Convertir le fuseau horaire UTC en fuseau horaire France
+            convert_start_date = utc_dt.astimezone(timezone).date()
+            # Si la date de début est en cours par rapport à la date actuelle et que le tournoi n'est pas fini alors, on ajoute le fichier à la liste
+            if convert_start_date == today and not "finished" in filename or convert_start_date < today and not "finished" in filename:
+                progress_files.append(os.path.join(directory, filename))
     return progress_files
