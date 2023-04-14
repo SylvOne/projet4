@@ -4,12 +4,12 @@ import pytz as pytz
 from models import Player, Tournament, Match
 from models import Round
 from datetime import datetime
+import fnmatch
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 def load_players_to_json(file_path, id_players=None):
     # on vérifie si c'est un fichier path ou directement de la data json
-            # Vérifier si le fichier existe
-
     if isinstance(file_path, dict):
         players_data = [file_path]
     elif os.path.isfile(file_path):
@@ -65,15 +65,6 @@ def save_player(file_path, players):
 
 
 def save_new_tournament(file_path, data, file_path_players):
-    """
-    This function check if the file "players.txt" exist and check if the tournament does not already exist, and if
-    it's ok, it create a new tournament file in .data/tournament, and rename the file "players.txt" to
-    'start_date_tournament-end_date_tournament-NameTournament.txt"
-
-    :param file_path: This is a filepath to create a new tournament file and to check if this file does not already exist.
-    :param data: This json data tournament to record in .txt file.
-    :param file_path_players: This is a players filepath (players.txt) to check if this file exist in ./data/players
-    """
     from main import main_menu
     # On Vérifie si un fichier tournoi existe, ensuite on vérifie si un fichier "players.txt" est bien existant
     if os.path.isfile(file_path):
@@ -93,18 +84,12 @@ def save_new_tournament(file_path, data, file_path_players):
     main_menu()
 
 
-def save_existing_tournament(file_path, data, finish_tournament = False):
-    """
-    This function update tournament file in .data/tournament
-
-    :param file_path: This is a filepath to create a new tournament file and to check if this file does not already exist.
-    :param data: This is json data tournament to record in .txt file.
-    """
-    from main import main_menu
+def save_existing_tournament(file_path, data, finish_tournament=False):
     # On Vérifie si un fichier tournoi existe, ensuite on vérifie si un fichier "players.txt" est bien existant
     if os.path.isfile(file_path):
-        # Si le tous les tours du tournoi ont été effectué alors on inscrit finished à la fin du fichier texte correspondant au tournoi
-        # on modifie également le nom du fichier joueurs texte en ajoutant "finished" (data/players/nomdufichier-finished)
+        # Si le tous les tours du tournoi ont été effectué
+        # alors on inscrit finished à la fin du fichier texte correspondant au tournoi
+        # on modifie également le nom du fichier joueurs en ajoutant "finished" (data/players/nomdufichier-finished)
         if finish_tournament:
             # Je supprimer l'ancien fichier tournoi sans le "finished"
             os.remove(file_path)
@@ -124,7 +109,6 @@ def save_existing_tournament(file_path, data, finish_tournament = False):
     else:
         # Si le tournoi n'existe pas, on créer un nouveau fichier tournoi
         print("Le tournoi n'existe pas")
-    #main_menu()
 
 
 def load_tournaments_in_progress(path_directory):
@@ -193,11 +177,12 @@ def load_rounds(json_tournament, id_to_player):
 
 def get_selected_tournament(tournaments):
     while True:
-        choice_tournament = input(" ==> Sélectionnez le numéro du tournoi que vous voulez lancer ('q' pour quitter)")
+        choice_tournament = input(" ==> Sélectionnez le numéro du tournoi voulu ('q' pour quitter)")
         if choice_tournament == 'q':
             return None
         while not int(choice_tournament) <= len(tournaments):
-            choice_tournament = input(" ==> La valeur entrée n'est pas correcte, veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
+            choice_tournament = input(" ==> La valeur entrée n'est pas correcte, "
+                                      "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
 
         selected_tournament = tournaments[int(choice_tournament) - 1]
         return selected_tournament
@@ -218,10 +203,12 @@ def get_files_with_start_date_in_future(directory):
         utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
         # Convertir le fuseau horaire UTC en fuseau horaire France
         convert_start_date = utc_dt.astimezone(timezone).date()
-        # Si la date de début est à venir, et que le nom du fichier tournoi ne contient pas "finished" on ajoute le fichier à la liste
-        if convert_start_date >= today and not "finished" in filename:
+        # Si la date de début est à venir, et que le nom du fichier tournoi
+        # ne contient pas "finished" on ajoute le fichier à la liste
+        if (convert_start_date >= today) and ("finished" not in filename):
             future_files.append(os.path.join(directory, filename))
     return future_files
+
 
 def get_files_with_start_date_in_progress(directory):
     # Récupération de la date actuelle en timestamp
@@ -238,7 +225,124 @@ def get_files_with_start_date_in_progress(directory):
             utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
             # Convertir le fuseau horaire UTC en fuseau horaire France
             convert_start_date = utc_dt.astimezone(timezone).date()
-            # Si la date de début est en cours par rapport à la date actuelle et que le tournoi n'est pas fini alors, on ajoute le fichier à la liste
-            if convert_start_date == today and not "finished" in filename or convert_start_date < today and not "finished" in filename:
+            # Si la date de début est en cours par rapport à la date actuelle
+            # et que le tournoi n'est pas fini alors, on ajoute le fichier à la liste
+            if (convert_start_date == today and "finished" not in filename or
+                    convert_start_date < today and "finished" not in filename):
                 progress_files.append(os.path.join(directory, filename))
     return progress_files
+
+
+def get_all_players():
+    # On défini le path jusqu'aux fichiers players :
+    path_folder_players = os.path.join('data', 'players')
+
+    # Initialiser une liste vide pour stocker les informations des joueurs
+    players_info = []
+
+    # Parcourir les fichiers du dossier et stocker les informations des joueurs dans la liste players_info
+    for file_name in os.listdir(path_folder_players):
+        if fnmatch.fnmatch(file_name, "*finished*"):
+            file_path = os.path.join(path_folder_players, file_name)
+            with open(file_path) as f:
+                data = json.load(f)
+                for player in data:
+                    players_info.append(player)
+
+    # Trier la liste players_info par ordre alphabétique
+    sorted_players_info = sorted(players_info, key=lambda x: (x['last_name'], x['first_name']))
+    return sorted_players_info
+
+
+def get_all_finished_tournaments():
+    path_directory = os.path.join('data', 'tournaments')
+    # Liste des fichiers tournament
+    tournament_files = []
+    # Parcours des fichiers dans le répertoire donné
+    for filename in os.listdir(path_directory):
+        if filename != ".DS_Store":
+            # Si le tournoi est bien fini alors on l'ajoute à la liste
+            if "finished" in filename:
+                tournament_files.append(os.path.join(path_directory, filename))
+
+    tournaments = []
+    for path_tournament in tournament_files:
+        tournament = load_tournament_from_file(path_tournament)
+        tournaments.append(tournament)
+    return tournaments
+
+
+def get_tournament_data(selected_tournament):
+    matches_list_tournament = []
+    tour = []
+    tournaments_data = []
+    for round in selected_tournament.rounds:
+        matches_list_tournament.append(round.matches)
+        tour.append(round.name)
+    for i in range(len(matches_list_tournament)):
+        for match in matches_list_tournament[i]:
+            if match.match[0][1] != 0 or match.match[1][1] != 0:
+                tournament_data = {
+                    'tour': tour[i],
+                    'match': match.match[0][0].first_name + " vs " + match.match[1][0].first_name,
+                    'winner_or_nul': match.match[0][0].first_name if match.match[0][1] > match.match[1][1] else
+                    match.match[1][0].first_name if match.match[1][1] > match.match[0][1] else "match nul",
+                }
+                tournaments_data.append(tournament_data)
+    return tournaments_data
+
+
+def get_top_players(selected_tournament):
+    max_score = -1
+    top_players = []
+    for player in selected_tournament.players:
+        if player.score >= max_score:
+            if player.score > max_score:
+                top_players = []
+            max_score = player.score
+            top_players.append(player)
+    return top_players
+
+
+def write_html(selected_tournament, tournaments_data, top_players):
+    env = Environment(
+        loader=PackageLoader('data', 'templates'),
+        autoescape=select_autoescape(['html'])
+    )
+    path_tournaments_html = os.path.join('data', 'templates', 'tournament_rounds_and_players.html')
+
+    with open(path_tournaments_html, 'w') as f:
+        template = env.from_string('''
+            <h1>{{ selected_tournament.name }}</h1>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tour</th>
+                        <th>Match</th>
+                        <th>Gagnant du match</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for data in tournament_result %}
+                        <tr>
+                            <td>{{ data.tour }}</td>
+                            <td>{{ data.match }}</td>
+                            <td>{{ data.winner_or_nul }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                {% if players_top|length == 1: %}
+                    <p>Le gagnant du tournoi est {{ players_top[0].first_name }}
+                    avec un score de {{ players_top[0].score }}</p>
+                {% endif %}
+                {% if players_top|length > 1: %}
+                    <p>Les gagnants du tournoi sont : </p>
+                    {% for top_player in players_top %}
+                        <p>{{ top_player.first_name }} avec un score de {{ top_player.score }}</p>
+                    {% endfor %}
+                {% endif %}
+            </table>
+            ''')
+        output = template.render(tournament_result=tournaments_data, selected_tournament=selected_tournament,
+                                 players_top=top_players)
+        f.write(output)

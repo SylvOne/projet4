@@ -26,7 +26,8 @@ def create_tournament():
     else:
         while not num_rounds.isnumeric() or int(num_rounds) < 1:
             print("Erreur : entrée non valide, veuillez entrer un entier supérieur ou égal à 1.")
-            num_rounds = input("Entrez le nombre de tours (Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
+            num_rounds = input("Entrez le nombre de tours "
+                               "(Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
         num_rounds = int(num_rounds)
 
     description = input("Entrez une description du tournoi ")
@@ -47,7 +48,12 @@ def create_tournament():
             tournament.add_player(player)
 
         # Save tournament to json in ./data/tournaments
-        tournament_file_name = str(int(datetime.strptime(tournament.start_date, '%d/%m/%Y').timestamp()))+"-"+str(int(datetime.strptime(tournament.end_date, '%d/%m/%Y').timestamp()))+"-"+string_manager.rm_accent_punct_space(tournament.name)+".txt"
+        start_date_timestamp = int(datetime.strptime(tournament.start_date, '%d/%m/%Y').timestamp())
+        end_date_timestamp = int(datetime.strptime(tournament.end_date, '%d/%m/%Y').timestamp())
+        clean_tournament_name = string_manager.rm_accent_punct_space(tournament.name)
+        tournament_file_name = (
+            f"{start_date_timestamp}-{end_date_timestamp}-{clean_tournament_name}.txt"
+        )
         path_tournament = os.path.join('data', 'tournaments', tournament_file_name)
         data_tournament = tournament.export_data_tournament()
         players_to_json = []
@@ -79,11 +85,14 @@ def start_round_tournament():
 
     start_date_timestamp = int(start_date.timestamp())
     end_date_timestamp = int(end_date.timestamp())
-    filename = f"{start_date_timestamp}-{end_date_timestamp}-{string_manager.rm_accent_punct_space(selected_tournament.name)}.txt"
+    filename = (
+        f"{start_date_timestamp}-{end_date_timestamp}-"
+        f"{string_manager.rm_accent_punct_space(selected_tournament.name)}.txt"
+    )
 
     path_of_tournament = os.path.join('data', 'tournaments', filename)
     for _ in range(selected_tournament.num_rounds):
-        if selected_tournament.start_round() == False:
+        if selected_tournament.start_round() is False:
             print("Le nombre de tours maximum a été atteint. Vous ne pouvez plus lancer ce tournoi")
             break
         current_round = selected_tournament.rounds[-1]
@@ -122,24 +131,30 @@ def start_round_tournament():
             count_match += 1
             stop_or_no = input("Voulez-vous quitter et enregistrer le tournoi ? y: Oui , n: Non ")
             if stop_or_no == "y":
-                # On indique une variable booleene à la fonction save_existing_tournament() afin de savoir si tous les tours du tournoi ont été effecutés
+                # On indique une variable booleene à la fonction save_existing_tournament()
+                # afin de savoir si tous les tours du tournoi ont été effecutés
                 finish_tournament = False
-                # on incremente de +1 la propriété current_round de la classe Tournament par contre ici on fait bien attention avant d'incrémenter d'avoir fini tous les matchs d'un tour
+                # on incremente de +1 la propriété current_round de la classe Tournament
+                # par contre ici on fait bien attention avant d'incrémenter d'avoir fini tous les matchs d'un tour
                 if count_match == len(current_round.matches):
                     selected_tournament.current_round += 1
                 # On enregistre au format json le tournoi
                 data_selected_tournament = selected_tournament.export_data_tournament()
 
-                # on enregistre les matchs dans pairs_to_do en vue d'enregistrer les matchs restant à faire si l'utilisateur quitte en cours de tour
+                # on enregistre les matchs dans pairs_to_do
+                # en vue d'enregistrer les matchs restant à faire si l'utilisateur quitte en cours de tour
                 if count_match < len(current_round.matches):
                     element = len(current_round.matches) - count_match
                     selected_tournament.pairs_to_do = current_round.matches[-element:]
                     # On enregistre au format json le tournoi
                     data_selected_tournament = selected_tournament.export_data_tournament()
-                    #path_of_tournament = paths_tournaments[int(choice_tournament) - 1]
-                if count_match == len(
-                        current_round.matches) and selected_tournament.current_round == selected_tournament.num_rounds:
+                # Si le compteur de match est égale au nombre de matches du tour
+                # et que le tour actuel est le dernier tour alors le tournoi est fini
+                if (count_match == len(current_round.matches) and
+                        selected_tournament.current_round == selected_tournament.num_rounds):
                     finish_tournament = True
+                if count_match == len(current_round.matches):
+                    selected_tournament.end_round()
                 file_manager.save_existing_tournament(path_of_tournament, data_selected_tournament, finish_tournament)
                 exit()
 
@@ -151,11 +166,9 @@ def start_round_tournament():
             # on enregistre au format json le tournoi
             data_selected_tournament = selected_tournament.export_data_tournament()
 
-            # On indique une variable booleene à la fonction save_existing_tournament() afin de savoir si tous les tours du tournoi ont été effecutés
+            # On indique une variable booleene à la fonction save_existing_tournament()
+            # afin de savoir si tous les tours du tournoi ont été effecutés
             finish_tournament = False
             if selected_tournament.current_round == selected_tournament.num_rounds:
                 finish_tournament = True
             file_manager.save_existing_tournament(path_of_tournament, data_selected_tournament, finish_tournament)
-
-
-

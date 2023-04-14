@@ -5,6 +5,7 @@ from models import Player, Tournament
 from views import tournament_views
 import os
 
+
 def add_player_to_database():
     players = []
     while True:
@@ -31,7 +32,7 @@ def add_player_to_database():
             existing_players = file_manager.load_players_to_json(path)
 
             # Fusionner les listes de joueurs
-            if existing_players != False:
+            if existing_players is not False:
                 all_players = existing_players + players
                 # Enregistrer tous les joueurs (anciens et nouveaux) dans le fichier
                 file_manager.save_player(path, all_players)
@@ -41,6 +42,7 @@ def add_player_to_database():
             break
 
     main_menu()
+
 
 def add_players_tournament():
     # On commence par afficher la liste des tournois à venir
@@ -67,7 +69,7 @@ def add_players_tournament():
             for player in players:
                 tournament.add_player(player)
 
-            #Add tournament to the tournaments list
+            # Add tournament to the tournaments list
             tournaments.append(tournament)
     print("")
     print("         ------------------------------")
@@ -77,15 +79,20 @@ def add_players_tournament():
     tournament_views.display_tournaments(tournaments)
 
     while True:
-        choice_tournament = input(" ==> Sélectionnez le numéro du tournoi dans lequel vous désirez rajouter des participants ('q' pour quitter)")
-        if choice_tournament =='q':
+        choice_tournament = input(
+            "=> Sélectionnez le numéro du tournoi dans lequel "
+            "vous désirez rajouter des participants ('q' pour quitter)"
+        )
+        if choice_tournament == 'q':
             break
-        #On vérifie la valeur entrée
+        # On vérifie la valeur entrée
         while not int(choice_tournament) <= len(tournaments):
-            choice_tournament = input(" ==> La valeur entrée n'est pas correcte, veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
+            choice_tournament = input(
+                "==> La valeur entrée n'est pas correcte, "
+                "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
 
         # on récupère l'objet Tournoi selectionné
-        selected_tournament = tournaments[int(choice_tournament)-1]
+        selected_tournament = tournaments[int(choice_tournament) - 1]
 
         # On fait la demande d'ajout et l'enregistrement du ou des nouveaux participants pour le tournoi selectionné
         first_name = input("Quel est le prénom du participant ?")

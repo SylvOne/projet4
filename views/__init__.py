@@ -1,2 +1,4 @@
-from .tournament_views import display_tournaments, display_tournaments_in_progress
-from .player_views import display_players
+# flake8: noqa
+from .tournament_views import display_tournaments, display_tournaments_in_progress, display_all_tournaments_finished
+from .player_views import display_players, display_all_players, display_all_players_in_tournament
+from .round_views import display_all_rounds_tournament

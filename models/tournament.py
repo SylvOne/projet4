@@ -3,6 +3,7 @@ import random
 import datetime
 from models.match import Match
 
+
 class Tournament:
     def __init__(self, name, location, start_date, end_date, num_rounds=4, description=""):
         self.name = name
@@ -31,7 +32,8 @@ class Tournament:
                 player2_id = joueur["player2"]
 
                 for i, player in enumerate(sorted_players):
-                    if player.national_id == player1_id and i + 1 < len(sorted_players) and sorted_players[i + 1].national_id == player2_id:
+                    if (player.national_id == player1_id and
+                            i + 1 < len(sorted_players) and sorted_players[i + 1].national_id == player2_id):
                         match = Match(player, sorted_players[i + 1])
                         pairs.append(match)
                         break
@@ -40,7 +42,8 @@ class Tournament:
         else:
             # Si le nombre de joueurs est impaire alors on retire un joueur de la liste de joueurs
             # Ce joueur sera choisi s'il n'est pas lui meme inscrit dans le dernier élement de sa liste d'opposants.
-            # De ce fait, si les conditions sont remplis et qu'on le choisi comme bye player alors on le retire de la liste de joueurs initiale et on l'ajoute à sa liste d'opposants
+            # De ce fait, si les conditions sont remplis et qu'on le choisi comme bye player
+            # alors on le retire de la liste de joueurs initiale et on l'ajoute à sa liste d'opposants
             # Cela permet d'être sur de ne pas choisir par mal chance toujours le meme joueurs
             if len(sorted_players) % 2 == 1:
                 for player in sorted_players:
@@ -88,23 +91,25 @@ class Tournament:
             "num_rounds": self.num_rounds,
             "current_round": self.current_round,
             "rounds": [
-            {
-                "name": round_.name,
-                "matches": [
-                    {
-                        "player1": match.match[0][0].national_id,
-                        "player1_score": match.match[0][1],
-                        "player2": match.match[1][0].national_id,
-                        "player2_score": match.match[1][1],
-                    }
-                    for match in round_.matches
-                ],
-                "start_time": round_.start_datetime.isoformat(),
-                "end_time": round_.end_datetime.isoformat() if round_.end_datetime else None,
-            }
-            for round_ in self.rounds
-        ] if self.rounds else self.rounds,
-            "players": [player.export_data_player() for player in self.players] if len(self.players) > 1 else self.players,
+                {
+                    "name": round_.name,
+                    "matches": [
+                        {
+                            "player1": match.match[0][0].national_id,
+                            "player1_score": match.match[0][1],
+                            "player2": match.match[1][0].national_id,
+                            "player2_score": match.match[1][1],
+                        }
+                        for match in round_.matches
+                    ],
+                    "start_time": round_.start_datetime.isoformat(),
+                    "end_time": round_.end_datetime.isoformat() if round_.end_datetime else None,
+                }
+                for round_ in self.rounds
+            ] if self.rounds else self.rounds,
+            "players": (
+                [player.export_data_player() for player in self.players] if len(self.players) > 1 else self.players
+            ),
             "description": self.description,
             "matches": [
                 {

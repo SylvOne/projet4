@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timedelta
 
+
 def is_valid_national_id(national_id):
     pattern = re.compile(r"^[A-Za-z]{2}\d{5}$")
     return bool(pattern.match(national_id))
