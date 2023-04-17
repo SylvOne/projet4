@@ -5,6 +5,10 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 def display_players(players):
+    """
+    Affiche en console les informations d'une liste de joueurs donnée en paramètre.
+    """
+
     if len(players) > 1:
         print(f"---- ( {len(players)} participants) ----")
     else:
@@ -15,6 +19,10 @@ def display_players(players):
 
 
 def display_all_players():
+    """
+    Affiche tous les joueurs ayant participé à au moins un tournoi.
+    """
+
     sorted_players_info = get_all_players()
     # Initialiser un ensemble vide pour stocker les national_id déjà affichés
     displayed_ids = set()
@@ -82,6 +90,10 @@ def display_all_players():
 
 
 def display_all_players_in_tournament(display_tournaments_fn):
+    """
+    Affiche tous les joueurs d'un tournoi donné.
+    """
+
     tournaments = get_all_finished_tournaments()
     display_tournaments_fn(tournaments)
     selected_tournament = get_selected_tournament(tournaments)

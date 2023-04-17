@@ -31,12 +31,16 @@ class Tournament:
                 player1_id = joueur["player1"]
                 player2_id = joueur["player2"]
 
+                player1 = None
+                player2 = None
                 for i, player in enumerate(sorted_players):
-                    if (player.national_id == player1_id and
-                            i + 1 < len(sorted_players) and sorted_players[i + 1].national_id == player2_id):
-                        match = Match(player, sorted_players[i + 1])
-                        pairs.append(match)
-                        break
+                    if player.national_id == player1_id:
+                        player1 = player
+                    if player.national_id == player2_id:
+                        player2 = player
+
+                match = Match(player1, player2)
+                pairs.append(match)
             # On vide la propriété pairs_to_do
             self.pairs_to_do = []
         else:
@@ -66,7 +70,6 @@ class Tournament:
                 pairs.append(match)
                 player1.opponents.append(player2)
                 player2.opponents.append(player1)
-
         return pairs
 
     def start_round(self):

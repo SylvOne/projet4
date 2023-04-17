@@ -7,6 +7,11 @@ from utils import (
 
 
 def display_all_rounds_tournament(display_tournaments_fn):
+    """
+    Affiche tous les tours d'un tournoi sélectionné par l'utilisateur,
+    ainsi que tous les matchs des tours en question.
+    """
+
     tournaments = get_all_finished_tournaments()
     display_tournaments_fn(tournaments)
     selected_tournament = get_selected_tournament(tournaments)

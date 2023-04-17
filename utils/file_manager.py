@@ -9,6 +9,12 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 def load_players_to_json(file_path, id_players=None):
+    """
+    Cette fonction permet créer les objets joueurs à partir d'un fichier players.txt
+    contenant des données joueurs au format json.
+    En d'autres termes elle permet de charger les joueurs à partir du fichier players.txt en vue de créer un tournoi.
+    """
+
     # on vérifie si c'est un fichier path ou directement de la data json
     if isinstance(file_path, dict):
         players_data = [file_path]
@@ -59,12 +65,20 @@ def load_players_to_json(file_path, id_players=None):
 
 
 def save_player(file_path, players):
+    """
+    Cette fonction enregistre les joueurs dans un fichier au format json
+    """
+
     players_data = [player.export_data_player() for player in players]
     with open(file_path, "w", encoding="utf-8") as outfile:
         json.dump(players_data, outfile, ensure_ascii=False)
 
 
 def save_new_tournament(file_path, data, file_path_players):
+    """
+    Cette fonction permet d'enregistrer au format json un nouveau tournoi
+    """
+
     from main import main_menu
     # On Vérifie si un fichier tournoi existe, ensuite on vérifie si un fichier "players.txt" est bien existant
     if os.path.isfile(file_path):
@@ -85,6 +99,10 @@ def save_new_tournament(file_path, data, file_path_players):
 
 
 def save_existing_tournament(file_path, data, finish_tournament=False):
+    """
+    Cette fonction permet d'enregistrer les modifications d'un tournoi au format json.
+    """
+
     # On Vérifie si un fichier tournoi existe, ensuite on vérifie si un fichier "players.txt" est bien existant
     if os.path.isfile(file_path):
         # Si le tous les tours du tournoi ont été effectué
@@ -112,6 +130,10 @@ def save_existing_tournament(file_path, data, finish_tournament=False):
 
 
 def load_tournaments_in_progress(path_directory):
+    """
+    Cette fonction permet de retourner un liste d'objets tournoi dont la date de début est en cours
+    """
+
     paths_tournaments = get_files_with_start_date_in_progress(path_directory)
     tournaments = []
     for path_tournament in paths_tournaments:
@@ -121,6 +143,10 @@ def load_tournaments_in_progress(path_directory):
 
 
 def load_tournament_from_file(path_tournament):
+    """
+    Cette fonction permet de retourner un objet Tournoi à partir d'un fichier json
+    """
+
     with open(path_tournament, "r", encoding='utf-8') as f:
         json_tournament = json.load(f)
 
@@ -146,6 +172,12 @@ def load_tournament_from_file(path_tournament):
 
 
 def load_players(json_tournament):
+    """
+    Cette fonction permet de retourner une liste d'objets joueurs.
+    Cette fonction est utilisée dans la fonction load_tournament_from_file().
+    En résumé cette fonction permet de charger les joueurs présent dans le fichier json correspondant à un tournoi.
+    """
+
     players = []
     for player_data in json_tournament["players"]:
         players.extend(load_players_to_json(player_data, json_tournament["players"]))
@@ -153,6 +185,11 @@ def load_players(json_tournament):
 
 
 def load_rounds(json_tournament, id_to_player):
+    """
+    Cette fonction est utilisée par load_tournament_from_file().
+    Elle permet de charger les objets Round présent dans le fichier json correspondant à un tournoi.
+    """
+
     rounds = []
     for round_data in json_tournament["rounds"]:
         round_ = Round(
@@ -176,19 +213,43 @@ def load_rounds(json_tournament, id_to_player):
 
 
 def get_selected_tournament(tournaments):
+    """
+    A partir d'une liste d'objets Tournoi,
+    cette fonction permet de retourner l'objet Tournoi sélectionné par l'utilisateur.
+    Elle retourne None si aucune sélection.
+    """
+
     while True:
         choice_tournament = input(" ==> Sélectionnez le numéro du tournoi voulu ('q' pour quitter)")
         if choice_tournament == 'q':
             return None
-        while not int(choice_tournament) <= len(tournaments):
-            choice_tournament = input(" ==> La valeur entrée n'est pas correcte, "
-                                      "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
 
+        # On vérifie la valeur entrée
+        while True:
+            try:
+                if choice_tournament == "q":
+                    return None
+                elif not int(choice_tournament) <= len(tournaments):
+                    choice_tournament = input(
+                        "==> La valeur entrée n'est pas correcte, "
+                        "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
+                else:
+                    break
+            except ValueError:
+                print("Vous devez entrer un nombre entier")
+                choice_tournament = input(
+                    "=> Sélectionnez le numéro du tournoi dans lequel "
+                    "vous désirez rajouter des participants ('q' pour quitter)"
+                )
         selected_tournament = tournaments[int(choice_tournament) - 1]
         return selected_tournament
 
 
 def get_files_with_start_date_in_future(directory):
+    """
+    Cette fonction retourne une liste de path des fichiers tournoi dont la date de début est à venir.
+    """
+
     # Récupération de la date actuelle en timestamp
     timezone = pytz.timezone('Europe/Paris')
     today = datetime.now(timezone).date()
@@ -197,20 +258,25 @@ def get_files_with_start_date_in_future(directory):
     future_files = []
     # Parcours des fichiers dans le répertoire donné
     for filename in os.listdir(directory):
-        # Récupération de la date de début du tournoi à partir du nom du fichier
-        start_date = int(filename.split("-")[0])
-        # Convertir le timestamp en objet datetime avec le fuseau horaire UTC
-        utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
-        # Convertir le fuseau horaire UTC en fuseau horaire France
-        convert_start_date = utc_dt.astimezone(timezone).date()
-        # Si la date de début est à venir, et que le nom du fichier tournoi
-        # ne contient pas "finished" on ajoute le fichier à la liste
-        if (convert_start_date >= today) and ("finished" not in filename):
-            future_files.append(os.path.join(directory, filename))
+        if filename != ".DS_Store":
+            # Récupération de la date de début du tournoi à partir du nom du fichier
+            start_date = int(filename.split("-")[0])
+            # Convertir le timestamp en objet datetime avec le fuseau horaire UTC
+            utc_dt = datetime.utcfromtimestamp(start_date).replace(tzinfo=pytz.utc)
+            # Convertir le fuseau horaire UTC en fuseau horaire France
+            convert_start_date = utc_dt.astimezone(timezone).date()
+            # Si la date de début est à venir, et que le nom du fichier tournoi
+            # ne contient pas "finished" on ajoute le fichier à la liste
+            if (convert_start_date >= today) and ("finished" not in filename):
+                future_files.append(os.path.join(directory, filename))
     return future_files
 
 
 def get_files_with_start_date_in_progress(directory):
+    """
+    Cette fonction retourne une liste de path des fichiers tournoi dont la date de début est en cours.
+    """
+
     # Récupération de la date actuelle en timestamp
     timezone = pytz.timezone('Europe/Paris')
     today = datetime.now(timezone).date()
@@ -234,6 +300,11 @@ def get_files_with_start_date_in_progress(directory):
 
 
 def get_all_players():
+    """
+    Cette fonction retourne un liste de dictionnaires contenants les informations des joueurs.
+    Les joueurs sont triés par ordre alphabétique.
+    """
+
     # On défini le path jusqu'aux fichiers players :
     path_folder_players = os.path.join('data', 'players')
 
@@ -255,6 +326,10 @@ def get_all_players():
 
 
 def get_all_finished_tournaments():
+    """
+    Cette fonction retourne une liste de path des fichiers json "tournoi" finis
+    """
+
     path_directory = os.path.join('data', 'tournaments')
     # Liste des fichiers tournament
     tournament_files = []
@@ -273,6 +348,15 @@ def get_all_finished_tournaments():
 
 
 def get_tournament_data(selected_tournament):
+    """
+    Cette fonction permet d'obternir des informations spécifique d'un tournoi.
+    Elle prend en paramètre un objet Tournoi et retourne une liste de dictionnaire.
+    Chaque dictionnaire contient les informations d'un match :
+    * Le tour du match en question
+    * la paire de joueurs du match en question
+    * le résultat du match
+    """
+
     matches_list_tournament = []
     tour = []
     tournaments_data = []
@@ -293,6 +377,12 @@ def get_tournament_data(selected_tournament):
 
 
 def get_top_players(selected_tournament):
+    """
+    Cette fonction retourne une liste de joueur(s) ayant le score le plus élevé.
+    Si cette liste ne contient qu'un élément, c'est donc qu'il n 'y a qu'un seul gagnant pour le tournoi donné
+    Si cette liste contient plusieurs éléments, c'est qu'il y des joueurs ex aequo pour ce tournoi.
+    """
+
     max_score = -1
     top_players = []
     for player in selected_tournament.players:
@@ -305,6 +395,11 @@ def get_top_players(selected_tournament):
 
 
 def write_html(selected_tournament, tournaments_data, top_players):
+    """
+    Cette fonction permet d'écrire le fichier html
+    correspondant à liste de tous les tours du tournoi et de tous les matchs du tour.
+    """
+
     env = Environment(
         loader=PackageLoader('data', 'templates'),
         autoescape=select_autoescape(['html'])

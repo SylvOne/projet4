@@ -6,6 +6,7 @@ def rm_accent_punct_space(str):
     """
     Supprime les accents, la ponctuation et les espaces de la chaîne de caractères 's'.
     """
+
     # Supprimer la ponctuation
     s = str.translate(str.maketrans("", "", string.punctuation))
 

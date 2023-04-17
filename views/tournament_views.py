@@ -5,6 +5,10 @@ import os
 
 
 def display_tournaments(tournaments):
+    """
+    Affiche les informations d'uns liste de tournois donnée en paramètre.
+    """
+
     for i in range(len(tournaments)):
         print("***************************************************************")
         print(
@@ -15,6 +19,10 @@ def display_tournaments(tournaments):
 
 
 def display_tournaments_in_progress(tournaments):
+    """
+    Affiche une liste des tournois en cours.
+    """
+
     if tournaments:
         print("")
         print("         ------------------------------")
@@ -31,6 +39,10 @@ def display_tournaments_in_progress(tournaments):
 
 
 def display_all_tournaments_finished():
+    """
+    Affiche tous les tournois qui ont été disputés.
+    """
+
     tournaments = get_all_finished_tournaments()
     if tournaments:
         # Parcourir les informations des joueurs triées et afficher les informations de chaque joueur

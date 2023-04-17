@@ -7,6 +7,10 @@ import os
 
 
 def add_player_to_database():
+    """
+    Fonction permettant d'ajouter des joueurs en vue de créer un tournoi
+    """
+
     players = []
     while True:
         first_name = input("Quel est le prénom du participant ?")
@@ -45,9 +49,20 @@ def add_player_to_database():
 
 
 def add_players_tournament():
+    """
+    Fonction permettant de rajouter des joueurs à un tournoi dont la date de début est à venir
+    """
+
     # On commence par afficher la liste des tournois à venir
     path_directory = os.path.join('data', 'tournaments')
     paths_tournaments = file_manager.get_files_with_start_date_in_future(path_directory)
+    if not paths_tournaments:
+        while True:
+            response = input("Vous devez avoir au moins un tournoi à venir pour réaliser cette action :"
+                             " tapez 'q' pour quitter")
+            if response == "q":
+                main_menu()
+
     tournaments = []
     for path_tournament in paths_tournaments:
         with open(path_tournament, "r", encoding='utf-8') as f:
@@ -86,11 +101,20 @@ def add_players_tournament():
         if choice_tournament == 'q':
             break
         # On vérifie la valeur entrée
-        while not int(choice_tournament) <= len(tournaments):
-            choice_tournament = input(
-                "==> La valeur entrée n'est pas correcte, "
-                "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
-
+        while True:
+            try:
+                if not int(choice_tournament) <= len(tournaments):
+                    choice_tournament = input(
+                        "==> La valeur entrée n'est pas correcte, "
+                        "veuillez entrer le numéro correspondant à un tournoi dans la liste ci-dessus :")
+                else:
+                    break
+            except ValueError:
+                print("Vous devez entrer un nombre entier")
+                choice_tournament = input(
+                    "=> Sélectionnez le numéro du tournoi dans lequel "
+                    "vous désirez rajouter des participants ('q' pour quitter)"
+                )
         # on récupère l'objet Tournoi selectionné
         selected_tournament = tournaments[int(choice_tournament) - 1]
 

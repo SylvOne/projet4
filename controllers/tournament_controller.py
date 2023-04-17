@@ -6,38 +6,51 @@ from views import tournament_views
 
 
 def create_tournament():
-    name = input("Entrez le nom du tournoi ")
-    location = input("Entrez le lieu du tournoi ")
-
-    while True:
-        start_date = input("Entrez la date de début du tournoi (JJ/MM/AAAA) : ")
-        if input_validation.is_valid_start_date_tournament(start_date):
-            break
-    start_date_obj = datetime.strptime(start_date, '%d/%m/%Y')
-
-    while True:
-        end_date = input("Entrez la date de fin du tournoi (JJ/MM/AAAA) : ")
-        if input_validation.is_valid_end_date_tournament(end_date, start_date_obj):
-            break
-
-    num_rounds = input("Entrez le nombre de tours (Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
-    if num_rounds == "":
-        num_rounds = 4
-    else:
-        while not num_rounds.isnumeric() or int(num_rounds) < 1:
-            print("Erreur : entrée non valide, veuillez entrer un entier supérieur ou égal à 1.")
-            num_rounds = input("Entrez le nombre de tours "
-                               "(Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
-        num_rounds = int(num_rounds)
-
-    description = input("Entrez une description du tournoi ")
+    """
+    Fonction permettant de créer un tournoi.
+    """
 
     # On Vérifie si un fichier "players.txt" est bien existant
     path_players = os.path.join('data', 'players', 'players.txt')
     if not os.path.isfile(path_players):
-        print("Vous devez d'abord ajouter des participants avant de créer un tournoi")
         print("")
+        print("Vous devez d'abord ajouter des participants pour un futur tournoi, avant de créer un tournoi")
+        print("")
+        while True:
+            response = input('Tapez "q" pour quitter : ')
+            if response == "q":
+                break
     else:
+        while True:
+            name = input("Entrez le nom du tournoi ")
+            if name:
+                break
+        while True:
+            location = input("Entrez le lieu du tournoi ")
+            if location:
+                break
+        while True:
+            start_date = input("Entrez la date de début du tournoi (JJ/MM/AAAA) : ")
+            if input_validation.is_valid_start_date_tournament(start_date):
+                break
+        start_date_obj = datetime.strptime(start_date, '%d/%m/%Y')
+
+        while True:
+            end_date = input("Entrez la date de fin du tournoi (JJ/MM/AAAA) : ")
+            if input_validation.is_valid_end_date_tournament(end_date, start_date_obj):
+                break
+
+        num_rounds = input("Entrez le nombre de tours (Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
+        if num_rounds == "":
+            num_rounds = 4
+        else:
+            while not num_rounds.isnumeric() or int(num_rounds) < 1:
+                print("Erreur : entrée non valide, veuillez entrer un entier supérieur ou égal à 1.")
+                num_rounds = input("Entrez le nombre de tours "
+                                   "(Appuyez sur Entrée pour utiliser la valeur par défaut de 4) : ")
+            num_rounds = int(num_rounds)
+
+        description = input("Entrez une description du tournoi ")
 
         # charger les joueurs pour la création d'un tournoi
         # path_players = os.path.join('data', 'players', 'players.txt')
@@ -70,6 +83,10 @@ def create_tournament():
 
 
 def start_round_tournament():
+    """
+    Fonction permettant de lancer un tournoi. Cette fonction fera appel à la méthode generate_pair()
+    de la classe Tournament afin de générer les paires de joueurs composant les matchs.
+    """
     path_directory = os.path.join('data', 'tournaments')
     tournaments = file_manager.load_tournaments_in_progress(path_directory)
 
